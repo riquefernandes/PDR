@@ -1,4 +1,10 @@
-import { add, differenceInYears, getDate, isAfter, startOfYear } from "date-fns";
+import {
+  add,
+  differenceInYears,
+  getDate,
+  isAfter,
+  startOfYear,
+} from "date-fns";
 import {
   dadosRescisaoPadrao,
   MOTIVOS_DEMISSAO,
@@ -27,11 +33,13 @@ function validarDados(dados) {
     throw new Error("A data de início não pode ser posterior à data de fim.");
   }
 
-  if (typeof salarioBrutoEmCentavos !== "number" || salarioBrutoEmCentavos < 0) {
+  if (
+    typeof salarioBrutoEmCentavos !== "number" ||
+    salarioBrutoEmCentavos < 0
+  ) {
     throw new Error("Salário bruto deve ser um número não-negativo.");
   }
 }
-
 
 // --- FUNÇÕES DE CÁLCULO DE VERBAS ---
 
@@ -181,11 +189,11 @@ function calcularINSS(baseCalculoEmCentavos) {
   for (let i = 0; i < TABELA_INSS.length; i++) {
     const faixa = TABELA_INSS[i];
     const limiteAnterior = i > 0 ? TABELA_INSS[i - 1].ate : 0;
-    
+
     // Se a base de cálculo for maior que o teto da faixa, usa o teto da faixa
-    tetoFaixa = faixa.ate - limiteAnterior
+    tetoFaixa = faixa.ate - limiteAnterior;
     if (salarioRestante <= 0) break;
-    
+
     const valorNaFaixa = Math.min(salarioRestante, tetoFaixa);
     inssTotal += Math.floor(valorNaFaixa * faixa.aliquota);
     salarioRestante -= valorNaFaixa;
@@ -288,7 +296,7 @@ function formatarParaBRL(valorEmCentavos) {
 export function calcularRescisaoCompleta(dados) {
   // 1. Valida os dados de entrada antes de começar
   validarDados(dados);
-  
+
   const {
     dataInicio,
     dataFim,
