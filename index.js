@@ -1,246 +1,393 @@
-// Configuração do cálculo
-const dadosRescisao = {
-  dataInicio: new Date("2025-06-12"),
-  dataFim: new Date("2025-12-25"),
-  salario: 1518,
-  avisoPrevioCumprido: false, // false = indenizado
-  temFeriasVencidas: false, // Ajustar conforme período aquisitivo
-  motivoDemissao: "sem_justa_causa", // sem_justa_causa | pedido_demissao | justa_causa
-};
+import { add, differenceInYears, getDate, isAfter, startOfYear } from "date-fns";
+import {
+  dadosRescisaoPadrao,
+  MOTIVOS_DEMISSAO,
+  DIAS_AVISO_BASE,
+  DIAS_ADICIONAIS_POR_ANO,
+  DIAS_PARA_MES_COMPLETO,
+  MESES_NO_ANO,
+  TABELA_INSS,
+  TABELA_IR,
+  DEDUCAO_POR_DEPENDENTE_IR,
+} from "./config.js";
 
-const DIAS_POR_ANO = 365.25; // Considera anos bissextos
-const DIAS_AVISO_BASE = 30;
-const DIAS_ADICIONAIS_POR_ANO = 3;
-const DIAS_PARA_MES_COMPLETO = 15;
+// --- FUNÇÕES DE VALIDAÇÃO ---
 
-// Calcula dias trabalhados no mês de saída
-function calcularSaldoSalario(dataInicio, dataFim, salario) {
-  const ano = dataFim.getFullYear();
-  const mes = dataFim.getMonth();
+function validarDados(dados) {
+  if (!dados) {
+    throw new Error("Objeto de dados da rescisão não pode ser nulo.");
+  }
+  const { dataInicio, dataFim, salarioBrutoEmCentavos } = dados;
 
-  // Primeiro dia do mês ou data de início (o que for maior)
-  const inicioMes = new Date(ano, mes, 1);
-  const dataInicioEfetiva = dataInicio > inicioMes ? dataInicio : inicioMes;
-
-  // Calcula dias trabalhados no mês
-  const diasTrabalhados =
-    Math.floor((dataFim - dataInicioEfetiva) / (24 * 60 * 60 * 1000)) + 1;
-
-  return Number(((salario / 30) * diasTrabalhados).toFixed(2));
-}
-
-// Calcula tempo de serviço em dias
-function calcularDiasTrabalhados(dataInicio, dataFim) {
-  return Math.floor((dataFim - dataInicio) / (24 * 60 * 60 * 1000));
-}
-
-// Calcula meses trabalhados (regra dos 15 dias)
-function calcularMesesTrabalhados(dataInicio, dataFim) {
-  let meses = 0;
-  let data = new Date(dataInicio);
-  const UM_DIA = 1000 * 60 * 60 * 24;
-
-  while (data <= dataFim) {
-    const ano = data.getFullYear();
-    const mes = data.getMonth();
-    const inicioMes = new Date(ano, mes, 1);
-    const fimMes = new Date(ano, mes + 1, 0);
-
-    const inicioEfetivo = Math.max(data.getTime(), inicioMes.getTime());
-    const fimEfetivo = Math.min(dataFim.getTime(), fimMes.getTime());
-
-    const diasNoMes = Math.floor((fimEfetivo - inicioEfetivo) / UM_DIA) + 1;
-
-    if (diasNoMes >= DIAS_PARA_MES_COMPLETO) meses++;
-
-    data.setDate(1);
-    data.setMonth(mes + 1);
+  if (!(dataInicio instanceof Date) || !(dataFim instanceof Date)) {
+    throw new Error("Datas de início e fim devem ser objetos Date válidos.");
   }
 
-  return meses;
+  if (isAfter(dataInicio, dataFim)) {
+    throw new Error("A data de início não pode ser posterior à data de fim.");
+  }
+
+  if (typeof salarioBrutoEmCentavos !== "number" || salarioBrutoEmCentavos < 0) {
+    throw new Error("Salário bruto deve ser um número não-negativo.");
+  }
 }
 
-// Calcula dias de aviso prévio proporcional
+
+// --- FUNÇÕES DE CÁLCULO DE VERBAS ---
+
+function calcularSaldoSalario(dataFim, salarioBrutoEmCentavos) {
+  const diasTrabalhadosNoMes = getDate(dataFim);
+  const salarioPorDia = Math.floor(salarioBrutoEmCentavos / 30);
+  return salarioPorDia * diasTrabalhadosNoMes;
+}
+
+function calcularMesesTrabalhados(
+  dataInicio,
+  dataFim,
+  considerarDiaProjecao = false
+) {
+  const dataProjecao = considerarDiaProjecao
+    ? add(dataFim, { days: 1 })
+    : dataFim;
+
+  const mesesCompletos =
+    (dataProjecao.getFullYear() - dataInicio.getFullYear()) * 12 +
+    (dataProjecao.getMonth() - dataInicio.getMonth());
+
+  const meses =
+    dataProjecao.getDate() >= DIAS_PARA_MES_COMPLETO
+      ? mesesCompletos + 1
+      : mesesCompletos;
+
+  return Math.max(0, meses);
+}
+
 function calcularDiasAvisoPrevio(dataInicio, dataFim) {
-  const diasTrabalhados = calcularDiasTrabalhados(dataInicio, dataFim);
-  const anosCompletos = Math.floor(diasTrabalhados / DIAS_POR_ANO);
+  const anosCompletos = differenceInYears(dataFim, dataInicio);
   const diasCalculados =
     DIAS_AVISO_BASE + anosCompletos * DIAS_ADICIONAIS_POR_ANO;
-
   return Math.min(diasCalculados, 90);
 }
 
-// Aviso prévio indenizado
-function calcularAvisoPrevio(
+function calcularAvisoPrevioIndenizado(
   dataInicio,
   dataFim,
-  salario,
+  salarioBrutoEmCentavos,
   avisoPrevioCumprido,
   motivoDemissao
 ) {
-  // Só tem direito se demissão sem justa causa e mais de 3 meses trabalhados
-  const meses = calcularMesesTrabalhados(dataInicio, dataFim);
-
+  const mesesTrabalhados = calcularMesesTrabalhados(dataInicio, dataFim);
   if (
-    motivoDemissao !== "sem_justa_causa" ||
-    meses < 3 ||
-    avisoPrevioCumprido
+    motivoDemissao !== MOTIVOS_DEMISSAO.SEM_JUSTA_CAUSA ||
+    avisoPrevioCumprido ||
+    mesesTrabalhados < 3
   ) {
     return 0;
   }
 
   const diasAviso = calcularDiasAvisoPrevio(dataInicio, dataFim);
-  return Number(((salario / 30) * diasAviso).toFixed(2));
+  const salarioPorDia = Math.floor(salarioBrutoEmCentavos / 30);
+  return salarioPorDia * diasAviso;
 }
 
-// Férias (vencidas + proporcionais + 1/3 constitucional)
 function calcularFerias(
   dataInicio,
   dataFim,
-  salario,
-  temFeriasVencidas,
+  salarioBrutoEmCentavos,
+  feriasVencidasNaoGozadas,
   motivoDemissao
 ) {
-  const meses = calcularMesesTrabalhados(dataInicio, dataFim);
-  let total = 0;
+  if (motivoDemissao === MOTIVOS_DEMISSAO.JUSTA_CAUSA) return 0;
 
-  // Férias vencidas (período aquisitivo completo de 12 meses)
-  if (temFeriasVencidas && motivoDemissao === "sem_justa_causa") {
-    total += salario + salario / 3; // Salário + 1/3 constitucional
+  let totalFerias = 0;
+  const umTerco = 1 / 3;
+
+  // Férias Vencidas
+  if (feriasVencidasNaoGozadas > 0) {
+    const valorFeriasVencidas =
+      salarioBrutoEmCentavos * feriasVencidasNaoGozadas;
+    totalFerias +=
+      valorFeriasVencidas + Math.floor(valorFeriasVencidas * umTerco);
   }
 
-  // Férias proporcionais (só tem direito se demissão sem justa causa)
-  if (motivoDemissao === "sem_justa_causa" && meses >= 1) {
-    const mesesProporcionais = temFeriasVencidas ? meses - 12 : meses;
+  // Férias Proporcionais
+  const dataInicioPeriodoAquisitivo = add(dataInicio, {
+    years: differenceInYears(dataFim, dataInicio),
+  });
 
-    if (mesesProporcionais > 0) {
-      const baseProporcionais = (salario / 12) * mesesProporcionais;
-      total += baseProporcionais + baseProporcionais / 3;
-    }
-  }
+  const mesesProporcionais = calcularMesesTrabalhados(
+    dataInicioPeriodoAquisitivo,
+    dataFim,
+    true
+  );
 
-  return Number(total.toFixed(2));
-}
-
-// 13º salário proporcional
-function calcularDecimoTerceiro(dataInicio, dataFim, salario, motivoDemissao) {
-  // Justa causa não tem direito
-  if (motivoDemissao === "justa_causa") return 0;
-
-  const anoRescisao = dataFim.getFullYear();
-  const inicioCalculo =
-    dataInicio > new Date(anoRescisao, 0, 1)
-      ? dataInicio
-      : new Date(anoRescisao, 0, 1);
-
-  let meses = 0;
-  let data = new Date(inicioCalculo);
-  const UM_DIA = 1000 * 60 * 60 * 24;
-
-  while (data <= dataFim) {
-    const ano = data.getFullYear();
-    const mes = data.getMonth();
-    const inicioMes = new Date(ano, mes, 1);
-    const fimMes = new Date(ano, mes + 1, 0);
-
-    const inicioEfetivo = Math.max(
-      inicioMes.getTime(),
-      inicioCalculo.getTime()
+  if (mesesProporcionais > 0) {
+    const baseProporcional = Math.floor(
+      (salarioBrutoEmCentavos / MESES_NO_ANO) * mesesProporcionais
     );
-    const fimEfetivo = Math.min(fimMes.getTime(), dataFim.getTime());
-
-    const dias = Math.floor((fimEfetivo - inicioEfetivo) / UM_DIA) + 1;
-
-    if (dias >= DIAS_PARA_MES_COMPLETO) meses++;
-
-    data.setMonth(mes + 1);
+    totalFerias += baseProporcional + Math.floor(baseProporcional * umTerco);
   }
 
-  return Number(((salario / 12) * meses).toFixed(2));
+  return totalFerias;
 }
 
-// Multa FGTS (40% sobre saldo, apenas demissão sem justa causa)
-function calcularMultaFGTS(dataInicio, dataFim, salario, motivoDemissao) {
-  if (motivoDemissao !== "sem_justa_causa") return 0;
+function calcularDecimoTerceiro(
+  dataInicio,
+  dataFim,
+  salarioBrutoEmCentavos,
+  motivoDemissao
+) {
+  if (motivoDemissao === MOTIVOS_DEMISSAO.JUSTA_CAUSA) return 0;
 
-  const meses = calcularMesesTrabalhados(dataInicio, dataFim);
-  const saldoFGTS = salario * 0.08 * meses; // 8% do salário por mês
+  const inicioAnoRescisao = startOfYear(dataFim);
+  const dataInicioContagem = isAfter(dataInicio, inicioAnoRescisao)
+    ? dataInicio
+    : inicioAnoRescisao;
 
-  return Number((saldoFGTS * 0.4).toFixed(2));
+  const mesesTrabalhadosNoAno = calcularMesesTrabalhados(
+    dataInicioContagem,
+    dataFim,
+    true
+  );
+
+  return Math.floor(
+    (salarioBrutoEmCentavos / MESES_NO_ANO) * mesesTrabalhadosNoAno
+  );
 }
 
-// Cálculo completo
-function calcularRescisaoCompleta(dados) {
+function calcularMultaFGTS(
+  dataInicio,
+  dataFim,
+  salarioBrutoEmCentavos,
+  motivoDemissao
+) {
+  if (motivoDemissao !== MOTIVOS_DEMISSAO.SEM_JUSTA_CAUSA) return 0;
+
+  const mesesTotais = calcularMesesTrabalhados(dataInicio, dataFim, true);
+  const depositoMensal = salarioBrutoEmCentavos * 0.08;
+  const saldoEstimadoFGTS = depositoMensal * mesesTotais;
+  const multa = saldoEstimadoFGTS * 0.4;
+
+  return Math.floor(multa);
+}
+
+// --- FUNÇÕES DE CÁLCULO DE DESCONTOS ---
+
+function calcularINSS(baseCalculoEmCentavos) {
+  let inssTotal = 0;
+  let salarioRestante = baseCalculoEmCentavos;
+  let tetoFaixa = 0;
+
+  for (let i = 0; i < TABELA_INSS.length; i++) {
+    const faixa = TABELA_INSS[i];
+    const limiteAnterior = i > 0 ? TABELA_INSS[i - 1].ate : 0;
+    
+    // Se a base de cálculo for maior que o teto da faixa, usa o teto da faixa
+    tetoFaixa = faixa.ate - limiteAnterior
+    if (salarioRestante <= 0) break;
+    
+    const valorNaFaixa = Math.min(salarioRestante, tetoFaixa);
+    inssTotal += Math.floor(valorNaFaixa * faixa.aliquota);
+    salarioRestante -= valorNaFaixa;
+  }
+
+  return inssTotal;
+}
+
+function calcularIRRF(
+  baseCalculoEmCentavos,
+  inssEmCentavos,
+  dependentesIR,
+  usarDeducaoDependente = true
+) {
+  // Base de cálculo = salário bruto - INSS - dedução por dependente (se aplicável)
+  const deducaoDependentes = usarDeducaoDependente
+    ? dependentesIR * DEDUCAO_POR_DEPENDENTE_IR
+    : 0;
+  const baseIR = baseCalculoEmCentavos - inssEmCentavos - deducaoDependentes;
+
+  if (baseIR <= 0) return 0;
+
+  // Encontra a faixa correspondente
+  const faixaIR =
+    TABELA_IR.find((faixa) => baseIR <= faixa.ate) ??
+    TABELA_IR[TABELA_IR.length - 1];
+
+  const irCalculado = Math.floor(baseIR * faixaIR.aliquota - faixaIR.deducao);
+  return Math.max(0, irCalculado);
+}
+
+function calcularPensaoAlimenticia(baseCalculoEmCentavos, percentual) {
+  if (percentual <= 0) return 0;
+  return Math.floor(baseCalculoEmCentavos * (percentual / 100));
+}
+
+function calcularDescontos(verbas, dadosRescisao) {
+  const { dependentesIR, pensaoAlimenticiaPercentual } = dadosRescisao;
+
+  // 1. Cálculo de INSS (separado por base)
+  // Férias e Aviso Prévio Indenizado são isentos de INSS.
+  const inssSobreSaldo = calcularINSS(verbas.saldoSalario);
+  const inssSobreDecimo = calcularINSS(verbas.decimoTerceiro);
+  const inssTotal = inssSobreSaldo + inssSobreDecimo;
+
+  // 2. Cálculo de IRRF (separado por base)
+  // Férias e Aviso Prévio Indenizado são isentos de IRRF.
+  // 13º tem tributação exclusiva.
+  const irrfSobreSaldo = calcularIRRF(
+    verbas.saldoSalario,
+    inssSobreSaldo,
+    dependentesIR,
+    true
+  );
+  const irrfSobreDecimo = calcularIRRF(
+    verbas.decimoTerceiro,
+    inssSobreDecimo,
+    0,
+    false
+  ); // Dedução de dependentes não se aplica ao 13º
+  const irrfTotal = irrfSobreSaldo + irrfSobreDecimo;
+
+  // 3. Cálculo de Pensão Alimentícia
+  // A base de cálculo da pensão pode variar MUITO.
+  // Uma abordagem comum é sobre o rendimento líquido (Bruto - Descontos).
+  // FGTS e sua multa não entram na base. Férias indenizadas também podem ficar de fora.
+  // **Esta é uma simplificação e deve ser validada com a decisão judicial.**
+  const basePensao =
+    verbas.saldoSalario +
+    verbas.decimoTerceiro +
+    verbas.avisoPrevio +
+    verbas.ferias -
+    inssTotal -
+    irrfTotal;
+  const pensaoTotal = calcularPensaoAlimenticia(
+    Math.max(0, basePensao),
+    pensaoAlimenticiaPercentual
+  );
+
+  const totalDescontos = inssTotal + irrfTotal + pensaoTotal;
+
+  return {
+    inss: inssTotal,
+    irrf: irrfTotal,
+    pensao: pensaoTotal,
+    totalDescontos,
+  };
+}
+
+// --- ORQUESTRADOR ---
+
+function formatarParaBRL(valorEmCentavos) {
+  const valor = valorEmCentavos / 100;
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+export function calcularRescisaoCompleta(dados) {
+  // 1. Valida os dados de entrada antes de começar
+  validarDados(dados);
+  
   const {
     dataInicio,
     dataFim,
-    salario,
+    salarioBrutoEmCentavos,
     avisoPrevioCumprido,
-    temFeriasVencidas,
+    feriasVencidasNaoGozadas,
     motivoDemissao,
   } = dados;
 
-  const saldoSalario = calcularSaldoSalario(dataInicio, dataFim, salario);
-  const avisoPrevio = calcularAvisoPrevio(
-    dataInicio,
-    dataFim,
-    salario,
-    avisoPrevioCumprido,
-    motivoDemissao
-  );
-  const ferias = calcularFerias(
-    dataInicio,
-    dataFim,
-    salario,
-    temFeriasVencidas,
-    motivoDemissao
-  );
-  const decimoTerceiro = calcularDecimoTerceiro(
-    dataInicio,
-    dataFim,
-    salario,
-    motivoDemissao
-  );
-  const multaFGTS = calcularMultaFGTS(
-    dataInicio,
-    dataFim,
-    salario,
-    motivoDemissao
-  );
+  // 2. Cálculo das verbas
+  const verbas = {
+    saldoSalario: calcularSaldoSalario(dataFim, salarioBrutoEmCentavos),
+    avisoPrevio: calcularAvisoPrevioIndenizado(
+      dataInicio,
+      dataFim,
+      salarioBrutoEmCentavos,
+      avisoPrevioCumprido,
+      motivoDemissao
+    ),
+    ferias: calcularFerias(
+      dataInicio,
+      dataFim,
+      salarioBrutoEmCentavos,
+      feriasVencidasNaoGozadas,
+      motivoDemissao
+    ),
+    decimoTerceiro: calcularDecimoTerceiro(
+      dataInicio,
+      dataFim,
+      salarioBrutoEmCentavos,
+      motivoDemissao
+    ),
+    multaFGTS: calcularMultaFGTS(
+      dataInicio,
+      dataFim,
+      salarioBrutoEmCentavos,
+      motivoDemissao
+    ),
+  };
 
-  const mesesTrabalhados = calcularMesesTrabalhados(dataInicio, dataFim);
-  const diasAvisoPrevio = calcularDiasAvisoPrevio(dataInicio, dataFim);
+  const totalBruto = Object.values(verbas).reduce((acc, val) => acc + val, 0);
 
+  // 3. Cálculo dos descontos
+  const descontos = calcularDescontos(verbas, dados);
+  const totalLiquido = totalBruto - descontos.totalDescontos;
+
+  // 4. Montagem do resultado
   return {
     informacoes: {
-      dataInicio: dataInicio.toLocaleDateString("pt-BR"),
-      dataFim: dataFim.toLocaleDateString("pt-BR"),
-      mesesTrabalhados,
-      diasAvisoPrevio,
-      motivoDemissao,
+      "Data de Início": dataInicio.toLocaleDateString("pt-BR"),
+      "Data de Fim": dataFim.toLocaleDateString("pt-BR"),
+      "Meses Trabalhados": calcularMesesTrabalhados(dataInicio, dataFim, true),
+      "Dias de Aviso Prévio": calcularDiasAvisoPrevio(dataInicio, dataFim),
+      Motivo: motivoDemissao.replace(/_/g, " "),
     },
     verbas: {
-      saldoSalario,
-      avisoPrevio,
-      ferias,
-      decimoTerceiro,
-      multaFGTS,
-      totalBruto:
-        saldoSalario + avisoPrevio + ferias + decimoTerceiro + multaFGTS,
+      "Saldo de Salário": formatarParaBRL(verbas.saldoSalario),
+      "Aviso Prévio Indenizado": formatarParaBRL(verbas.avisoPrevio),
+      "Férias (Vencidas + Proporcionais)": formatarParaBRL(verbas.ferias),
+      "13º Salário Proporcional": formatarParaBRL(verbas.decimoTerceiro),
+      "Multa 40% FGTS": formatarParaBRL(verbas.multaFGTS),
+      "": "───────────────",
+      "TOTAL BRUTO": formatarParaBRL(totalBruto),
+    },
+    descontos: {
+      INSS: formatarParaBRL(descontos.inss),
+      IRRF: formatarParaBRL(descontos.irrf),
+      "Pensão Alimentícia": formatarParaBRL(descontos.pensao),
+      "": "───────────────",
+      "TOTAL DESCONTOS": formatarParaBRL(descontos.totalDescontos),
+    },
+    resumo: {
+      "Total Bruto": formatarParaBRL(totalBruto),
+      "Total Descontos": formatarParaBRL(descontos.totalDescontos),
+      "TOTAL LÍQUIDO A RECEBER": formatarParaBRL(totalLiquido),
     },
   };
 }
 
-// Execução
-const resultado = calcularRescisaoCompleta(dadosRescisao);
+// --- EXECUÇÃO ---
+// Esta parte será removida na aplicação Next.js e substituída pela interação com a UI
+try {
+  const resultado = calcularRescisaoCompleta(dadosRescisaoPadrao);
 
-console.log("=== CÁLCULO DE RESCISÃO TRABALHISTA ===\n");
-console.log("INFORMAÇÕES:");
-console.table(resultado.informacoes);
-console.log("\nVERBAS RESCISÓRIAS:");
-console.table(resultado.verbas);
-console.log(
-  `\nTOTAL A RECEBER: R$ ${resultado.verbas.totalBruto.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-  })}`
-);
+  console.log("╔═══════════════════════════════════════════════════════╗");
+  console.log("║     CÁLCULO DE RESCISÃO TRABALHISTA (CLT)            ║");
+  console.log("╚═══════════════════════════════════════════════════════╝\n");
+
+  console.log("📋 INFORMAÇÕES DO CONTRATO:");
+  console.table(resultado.informacoes);
+
+  console.log("\n💰 VERBAS RESCISÓRIAS:");
+  console.table(resultado.verbas);
+
+  console.log("\n📉 DESCONTOS:");
+  console.table(resultado.descontos);
+
+  console.log("\n💵 RESUMO FINAL:");
+  console.table(resultado.resumo);
+} catch (error) {
+  console.error("❌ Erro ao calcular a rescisão:", error.message);
+}
