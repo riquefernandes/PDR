@@ -33,6 +33,7 @@ export async function calculate(prevState: State, formData: FormData): Promise<S
 
   try {
     const result = calcularRescisaoCompleta(dataForCalc);
+    console.log(JSON.stringify(result, null, 2));
     return {
       message: "Cálculo realizado com sucesso!",
       data: result,
