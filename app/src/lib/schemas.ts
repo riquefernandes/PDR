@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MOTIVOS_DEMISSAO, TIPOS_AVISO_PREVIO } from "./config";
+import { parse, isValid } from 'date-fns';
 
 // Obtém os valores do objeto MOTIVOS_DEMISSAO como uma tupla de strings para o z.enum
 const motivosDemissaoValidos = Object.values(MOTIVOS_DEMISSAO) as [
@@ -13,14 +14,21 @@ const tiposAvisoPrevioValidos = Object.values(TIPOS_AVISO_PREVIO) as [
   ...string[],
 ];
 
+const dateSchema = z.string().refine(
+  (val) => {
+    if (!val || val.length < 8) return false; // "d/m/yy" is the minimum
+    const parsedDate = parse(val, 'dd/MM/yy', new Date());
+    return isValid(parsedDate);
+  },
+  {
+    message: 'Data inválida. Use o formato dd/mm/yy.',
+  }
+).transform((val) => parse(val, 'dd/MM/yy', new Date()));
+
 // Schema Zod para validação do formulário, compartilhado entre cliente e servidor.
 export const FormSchema = z.object({
-  dataInicio: z.coerce.date({
-    error: "Data de início inválida ou não preenchida.",
-  }),
-  dataFim: z.coerce.date({
-    error: "Data de fim inválida ou não preenchida.",
-  }),
+  dataInicio: dateSchema,
+  dataFim: dateSchema,
   salarioBruto: z.coerce
     .number({
       error: "O salário bruto deve ser um número válido.",
