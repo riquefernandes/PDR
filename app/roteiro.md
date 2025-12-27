@@ -19,11 +19,11 @@ Este documento descreve os principais marcos e tarefas para o desenvolvimento da
 
 ## Milestone 2: UI e Lógica do Calculador
 
-- [ ] **Tarefa #3: Criar Componente de Formulário:**
+- [x] **Tarefa #3: Criar Componente de Formulário:**
   - Desenvolver componentes React para todos os campos de entrada (datas, salário, opções, etc.).
   - Gerenciar o estado do formulário (ex: com `useState` ou `react-hook-form`).
 
-- [ ] **Tarefa #4: Integrar Lógica de Cálculo:**
+- [x] **Tarefa #4: Integrar Lógica de Cálculo:**
   - Mover a lógica de cálculo existente para a pasta `/lib`.
   - Criar uma API route ou Server Action que usa a lógica de cálculo.
   - Conectar o formulário do front-end para chamar a lógica no back-end.
@@ -32,11 +32,11 @@ Este documento descreve os principais marcos e tarefas para o desenvolvimento da
 
 ## Milestone 3: Resultados e Experiência do Usuário (UX)
 
-- [ ] **Tarefa #5: Criar Componente de Resultados:**
+- [x] **Tarefa #5: Criar Componente de Resultados:**
   - Desenvolver um componente para exibir os resultados da rescisão de forma clara (verbas, descontos, totais).
   - Adicionar estados de carregamento (loading) e erro na UI.
 
-- [ ] **Tarefa #6: Polimento da UX e Responsividade:**
+- [x] **Tarefa #6: Polimento da UX e Responsividade:**
   - Garantir que a aplicação seja totalmente responsiva (mobile-first).
   - Adicionar validação de formulário no lado do cliente para feedback instantâneo.
 
