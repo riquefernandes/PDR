@@ -28,7 +28,6 @@ export async function calculate(prevState: State, formData: FormData): Promise<S
   const dataForCalc = {
       ...restOfData,
       salarioBrutoEmCentavos: Math.round(salarioBruto * 100),
-      avisoPrevioCumprido: false, // This is no longer used in the logic, but the function signature still expects it.
   };
 
   try {

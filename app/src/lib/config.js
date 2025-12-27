@@ -5,6 +5,13 @@ export const MOTIVOS_DEMISSAO = {
   JUSTA_CAUSA: "justa_causa",
 };
 
+// TIPOS DE AVISO PRÉVIO
+export const TIPOS_AVISO_PREVIO = {
+  TRABALHADO: "trabalhado",
+  INDENIZADO: "indenizado",
+  NAO_SE_APLICA: "nao_se_aplica",
+};
+
 // --- CONFIGURAÇÃO PADRÃO DO CÁLCULO ---
 // No futuro, isso virá do estado da aplicação React (useState)
 export const dadosRescisaoPadrao = {

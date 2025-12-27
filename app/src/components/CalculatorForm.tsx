@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import { MOTIVOS_DEMISSAO } from "@/lib/config";
+import { MOTIVOS_DEMISSAO, TIPOS_AVISO_PREVIO } from "@/lib/config";
 import { calculate, State } from "@/app/actions";
 import { FormSchema } from "@/lib/schemas";
 import CalculationResults from "./CalculationResults";
@@ -27,6 +27,7 @@ export default function CalculatorForm() {
       dataFim: "",
       salarioBruto: 0,
       motivoDemissao: MOTIVOS_DEMISSAO.SEM_JUSTA_CAUSA,
+      tipoAvisoPrevio: TIPOS_AVISO_PREVIO.NAO_SE_APLICA,
       feriasVencidasNaoGozadas: 0,
       dependentesIR: 0,
       pensaoAlimenticiaPercentual: 0,
@@ -62,15 +63,15 @@ export default function CalculatorForm() {
             {errors.dataFim && <p className="text-sm text-red-500 mt-1">{errors.dataFim.message}</p>}
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-1">
             <label htmlFor="salarioBruto" className="block text-sm font-medium text-gray-700 mb-1">
               Último Salário Bruto (R$)
             </label>
             <input type="number" id="salarioBruto" {...register("salarioBruto", { valueAsNumber: true })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900" placeholder="Ex: 2400.00" step="0.01" />
             {errors.salarioBruto && <p className="text-sm text-red-500 mt-1">{errors.salarioBruto.message}</p>}
           </div>
-          <div>
+          <div className="md:col-span-1">
             <label htmlFor="motivoDemissao" className="block text-sm font-medium text-gray-700 mb-1">
               Motivo da Rescisão
             </label>
@@ -80,6 +81,17 @@ export default function CalculatorForm() {
               <option value={MOTIVOS_DEMISSAO.JUSTA_CAUSA}>Demissão por justa causa</option>
             </select>
             {errors.motivoDemissao && <p className="text-sm text-red-500 mt-1">{errors.motivoDemissao.message}</p>}
+          </div>
+          <div className="md:col-span-1">
+            <label htmlFor="tipoAvisoPrevio" className="block text-sm font-medium text-gray-700 mb-1">
+              Aviso Prévio
+            </label>
+            <select id="tipoAvisoPrevio" {...register("tipoAvisoPrevio")} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900">
+              <option value={TIPOS_AVISO_PREVIO.NAO_SE_APLICA}>Não se aplica</option>
+              <option value={TIPOS_AVISO_PREVIO.INDENIZADO}>Indenizado</option>
+              <option value={TIPOS_AVISO_PREVIO.TRABALHADO}>Trabalhado</option>
+            </select>
+            {errors.tipoAvisoPrevio && <p className="text-sm text-red-500 mt-1">{errors.tipoAvisoPrevio.message}</p>}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-gray-200 pt-8">

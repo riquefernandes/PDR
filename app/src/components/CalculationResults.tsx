@@ -6,6 +6,7 @@ interface CalculationResultsProps {
     verbas: { [key: string]: string };
     descontos: { [key: string]: string };
     resumo: { [key: string]: string };
+    fgts?: { [key: string]: string };
   };
 }
 
@@ -39,6 +40,30 @@ const CalculationResults: React.FC<CalculationResultsProps> = ({ data }) => {
           ))}
         </div>
       </div>
+
+      {/* Seção de FGTS (Opcional) */}
+      {data.fgts && (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold text-gray-700 mb-4">Valores de FGTS</h3>
+          <div className="space-y-2">
+            {Object.entries(data.fgts).map(([key, value]) => {
+              if (key === "Observação") {
+                return (
+                  <p key={key} className="md:col-span-2 mt-2 text-sm text-gray-500">
+                    <strong>{key}:</strong> {value}
+                  </p>
+                );
+              }
+              return (
+                <div key={key} className="flex justify-between items-center border-b border-gray-100 py-2 last:border-b-0">
+                  <span className="text-gray-600">{key}:</span>
+                  <span className="font-bold text-gray-800">{value}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Seção de Descontos */}
       <div className="bg-white p-6 rounded-lg shadow-md">

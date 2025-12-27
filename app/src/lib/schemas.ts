@@ -1,8 +1,11 @@
 import { z } from "zod";
-import { MOTIVOS_DEMISSAO } from "./config";
+import { MOTIVOS_DEMISSAO, TIPOS_AVISO_PREVIO } from "./config";
 
 // Obtém os valores do objeto MOTIVOS_DEMISSAO como uma tupla de strings para o z.enum
 const motivosDemissaoValidos = Object.values(MOTIVOS_DEMISSAO) as [string, ...string[]];
+
+// Obtém os valores do objeto TIPOS_AVISO_PREVIO como uma tupla de strings para o z.enum
+const tiposAvisoPrevioValidos = Object.values(TIPOS_AVISO_PREVIO) as [string, ...string[]];
 
 // Schema Zod para validação do formulário, compartilhado entre cliente e servidor.
 export const FormSchema = z.object({
@@ -19,6 +22,9 @@ export const FormSchema = z.object({
     .positive("O salário deve ser um número positivo."),
   motivoDemissao: z.enum(motivosDemissaoValidos, {
     error: "O motivo da demissão é obrigatório.",
+  }),
+  tipoAvisoPrevio: z.enum(tiposAvisoPrevioValidos, {
+    error: "O tipo de aviso prévio é obrigatório.",
   }),
   // Campos que podem ser "vazios" ou zero, com valores padrão.
   feriasVencidasNaoGozadas: z.coerce
