@@ -2,18 +2,24 @@ import { z } from "zod";
 import { MOTIVOS_DEMISSAO, TIPOS_AVISO_PREVIO } from "./config";
 
 // Obtém os valores do objeto MOTIVOS_DEMISSAO como uma tupla de strings para o z.enum
-const motivosDemissaoValidos = Object.values(MOTIVOS_DEMISSAO) as [string, ...string[]];
+const motivosDemissaoValidos = Object.values(MOTIVOS_DEMISSAO) as [
+  string,
+  ...string[],
+];
 
 // Obtém os valores do objeto TIPOS_AVISO_PREVIO como uma tupla de strings para o z.enum
-const tiposAvisoPrevioValidos = Object.values(TIPOS_AVISO_PREVIO) as [string, ...string[]];
+const tiposAvisoPrevioValidos = Object.values(TIPOS_AVISO_PREVIO) as [
+  string,
+  ...string[],
+];
 
 // Schema Zod para validação do formulário, compartilhado entre cliente e servidor.
 export const FormSchema = z.object({
   dataInicio: z.coerce.date({
-    error: "Data de início inválida ou não preenchida."
+    error: "Data de início inválida ou não preenchida.",
   }),
   dataFim: z.coerce.date({
-    error: "Data de fim inválida ou não preenchida."
+    error: "Data de fim inválida ou não preenchida.",
   }),
   salarioBruto: z.coerce
     .number({

@@ -71,7 +71,8 @@ function calcularMesesTrabalhados(dataInicio, dataFim) {
 
   while (
     getYear(dataCorrente) < dataFimAno ||
-    (getYear(dataCorrente) === dataFimAno && getMonth(dataCorrente) <= dataFimMes)
+    (getYear(dataCorrente) === dataFimAno &&
+      getMonth(dataCorrente) <= dataFimMes)
   ) {
     const ano = getYear(dataCorrente);
     const mes = getMonth(dataCorrente);
@@ -79,15 +80,19 @@ function calcularMesesTrabalhados(dataInicio, dataFim) {
     const primeiroDiaDoMes = startOfMonth(dataCorrente);
     const ultimoDiaDoMes = lastDayOfMonth(dataCorrente);
 
-    const inicioEfetivo = isAfter(dataInicio, primeiroDiaDoMes) ? dataInicio : primeiroDiaDoMes;
-    const fimEfetivo = isBefore(dataFim, ultimoDiaDoMes) ? dataFim : ultimoDiaDoMes;
-    
+    const inicioEfetivo = isAfter(dataInicio, primeiroDiaDoMes)
+      ? dataInicio
+      : primeiroDiaDoMes;
+    const fimEfetivo = isBefore(dataFim, ultimoDiaDoMes)
+      ? dataFim
+      : ultimoDiaDoMes;
+
     const diasNoMes = differenceInDays(fimEfetivo, inicioEfetivo) + 1;
-    
+
     if (diasNoMes >= DIAS_PARA_MES_COMPLETO) {
       meses++;
     }
-    
+
     dataCorrente = add(primeiroDiaDoMes, { months: 1 });
   }
 
@@ -121,8 +126,11 @@ function calcularFerias(
   const anosCompletos = differenceInYears(dataFim, dataInicio);
   const dataInicioPeriodoAquisitivo = add(dataInicio, { years: anosCompletos });
 
-  const mesesProporcionais = calcularMesesTrabalhados(dataInicioPeriodoAquisitivo, dataFim);
-  
+  const mesesProporcionais = calcularMesesTrabalhados(
+    dataInicioPeriodoAquisitivo,
+    dataFim
+  );
+
   if (mesesProporcionais > 0) {
     const baseProporcional = Math.floor(
       (salarioBrutoEmCentavos / MESES_NO_ANO) * mesesProporcionais
@@ -157,7 +165,6 @@ function calcularDecimoTerceiro(
 }
 
 function calcularValoresFGTS(
-
   dataInicio,
 
   dataFim,
@@ -165,16 +172,10 @@ function calcularValoresFGTS(
   salarioBrutoEmCentavos,
 
   motivoDemissao
-
 ) {
-
   if (motivoDemissao !== MOTIVOS_DEMISSAO.SEM_JUSTA_CAUSA) {
-
     return { saldo: 0, multa: 0 };
-
   }
-
-
 
   const mesesTotais = calcularMesesTrabalhados(dataInicio, dataFim);
 
@@ -184,56 +185,36 @@ function calcularValoresFGTS(
 
   const multa = Math.floor(saldoEstimadoFGTS * 0.4);
 
-
-
   return { saldo: saldoEstimadoFGTS, multa };
-
 }
 
-
-
 function calcularINSS(baseCalculoEmCentavos) {
-
   let inssTotal = 0;
 
   let salarioRestante = baseCalculoEmCentavos;
 
   let tetoFaixa = 0;
 
-
-
   for (let i = 0; i < TABELA_INSS.length; i++) {
-
     const faixa = TABELA_INSS[i];
 
     const limiteAnterior = i > 0 ? TABELA_INSS[i - 1].ate : 0;
 
-
-
     tetoFaixa = faixa.ate - limiteAnterior;
 
     if (salarioRestante <= 0) break;
-
-
 
     const valorNaFaixa = Math.min(salarioRestante, tetoFaixa);
 
     inssTotal += Math.floor(valorNaFaixa * faixa.aliquota);
 
     salarioRestante -= valorNaFaixa;
-
   }
 
-
-
   return inssTotal;
-
 }
 
-
-
 function calcularIRRF(
-
   baseCalculoEmCentavos,
 
   inssEmCentavos,
@@ -241,54 +222,32 @@ function calcularIRRF(
   dependentesIR,
 
   usarDeducaoDependente = true
-
 ) {
-
   const deducaoDependentes = usarDeducaoDependente
-
     ? dependentesIR * DEDUCAO_POR_DEPENDENTE_IR
-
     : 0;
 
   const baseIR = baseCalculoEmCentavos - inssEmCentavos - deducaoDependentes;
 
-
-
   if (baseIR <= 0) return 0;
 
-
-
   const faixaIR =
-
     TABELA_IR.find((faixa) => baseIR <= faixa.ate) ??
-
     TABELA_IR[TABELA_IR.length - 1];
-
-
 
   const irCalculado = Math.floor(baseIR * faixaIR.aliquota - faixaIR.deducao);
 
   return Math.max(0, irCalculado);
-
 }
 
-
-
 function calcularPensaoAlimenticia(baseCalculoEmCentavos, percentual) {
-
   if (percentual <= 0) return 0;
 
   return Math.floor(baseCalculoEmCentavos * (percentual / 100));
-
 }
 
-
-
 function calcularDescontos(verbas, dadosRescisao) {
-
   const { dependentesIR, pensaoAlimenticiaPercentual } = dadosRescisao;
-
-
 
   const inssSobreSaldo = calcularINSS(verbas.saldoSalario);
 
@@ -296,10 +255,7 @@ function calcularDescontos(verbas, dadosRescisao) {
 
   const inssTotal = inssSobreSaldo + inssSobreDecimo;
 
-
-
   const irrfSobreSaldo = calcularIRRF(
-
     verbas.saldoSalario,
 
     inssSobreSaldo,
@@ -307,11 +263,9 @@ function calcularDescontos(verbas, dadosRescisao) {
     dependentesIR,
 
     true
-
   );
 
   const irrfSobreDecimo = calcularIRRF(
-
     verbas.decimoTerceiro,
 
     inssSobreDecimo,
@@ -319,43 +273,27 @@ function calcularDescontos(verbas, dadosRescisao) {
     0,
 
     false
-
   );
 
   const irrfTotal = irrfSobreSaldo + irrfSobreDecimo;
 
-
-
   const basePensao =
-
     verbas.saldoSalario +
-
     verbas.decimoTerceiro +
-
     verbas.avisoPrevio +
-
     verbas.ferias -
-
     inssTotal -
-
     irrfTotal;
 
   const pensaoTotal = calcularPensaoAlimenticia(
-
     Math.max(0, basePensao),
 
     pensaoAlimenticiaPercentual
-
   );
-
-
 
   const totalDescontos = inssTotal + irrfTotal + pensaoTotal;
 
-
-
   return {
-
     inss: inssTotal,
 
     irrf: irrfTotal,
@@ -363,37 +301,23 @@ function calcularDescontos(verbas, dadosRescisao) {
     pensao: pensaoTotal,
 
     totalDescontos,
-
   };
-
 }
 
-
-
 function formatarParaBRL(valorEmCentavos) {
-
   const valor = valorEmCentavos / 100;
 
   return valor.toLocaleString("pt-BR", {
-
     style: "currency",
 
     currency: "BRL",
-
   });
-
 }
 
-
-
 export function calcularRescisaoCompleta(dados) {
-
   validarDados(dados);
 
-
-
   const {
-
     dataInicio,
 
     dataFim,
@@ -405,10 +329,7 @@ export function calcularRescisaoCompleta(dados) {
     motivoDemissao,
 
     tipoAvisoPrevio,
-
   } = dados;
-
-
 
   let dataFimEfetiva = dataFim;
 
@@ -416,30 +337,21 @@ export function calcularRescisaoCompleta(dados) {
 
   let valorAvisoPrevio = 0;
 
-
-
   // Lógica do Aviso Prévio
 
   if (motivoDemissao === MOTIVOS_DEMISSAO.SEM_JUSTA_CAUSA) {
-
     diasAvisoPrevio = calcularDiasAvisoPrevio(dataInicio, dataFim);
 
     if (tipoAvisoPrevio === TIPOS_AVISO_PREVIO.INDENIZADO) {
-
       dataFimEfetiva = add(dataFim, { days: diasAvisoPrevio });
 
       const salarioPorDia = Math.floor(salarioBrutoEmCentavos / 30);
 
       valorAvisoPrevio = salarioPorDia * diasAvisoPrevio;
-
     }
-
   }
 
-
-
   const fgts = calcularValoresFGTS(
-
     dataInicio,
 
     dataFimEfetiva, // Usa data projetada
@@ -447,19 +359,14 @@ export function calcularRescisaoCompleta(dados) {
     salarioBrutoEmCentavos,
 
     motivoDemissao
-
   );
 
-
-
   const verbas = {
-
     saldoSalario: calcularSaldoSalario(dataFim, salarioBrutoEmCentavos), // Saldo é sobre o último mês trabalhado
 
     avisoPrevio: valorAvisoPrevio,
 
     ferias: calcularFerias(
-
       dataInicio,
 
       dataFimEfetiva, // Usa data projetada
@@ -469,11 +376,9 @@ export function calcularRescisaoCompleta(dados) {
       feriasVencidasNaoGozadas,
 
       motivoDemissao
-
     ),
 
     decimoTerceiro: calcularDecimoTerceiro(
-
       dataInicio,
 
       dataFimEfetiva, // Usa data projetada
@@ -481,14 +386,10 @@ export function calcularRescisaoCompleta(dados) {
       salarioBrutoEmCentavos,
 
       motivoDemissao
-
     ),
 
     multaFGTS: fgts.multa,
-
   };
-
-
 
   const totalBruto = Object.values(verbas).reduce((acc, val) => acc + val, 0);
 
@@ -496,12 +397,8 @@ export function calcularRescisaoCompleta(dados) {
 
   const totalLiquido = totalBruto - descontos.totalDescontos;
 
-
-
   return {
-
     informacoes: {
-
       "Data de Início": dataInicio.toLocaleDateString("pt-BR"),
 
       "Data de Fim (Original)": dataFim.toLocaleDateString("pt-BR"),
@@ -509,11 +406,9 @@ export function calcularRescisaoCompleta(dados) {
       "Data Final (Projetada)": dataFimEfetiva.toLocaleDateString("pt-BR"),
 
       "Meses Trabalhados (com projeção)": calcularMesesTrabalhados(
-
         dataInicio,
 
         dataFimEfetiva
-
       ),
 
       "Dias de Aviso Prévio": diasAvisoPrevio,
@@ -521,11 +416,9 @@ export function calcularRescisaoCompleta(dados) {
       Motivo: motivoDemissao.replace(/_/g, " "),
 
       "Tipo de Aviso": tipoAvisoPrevio.replace(/_/g, " "),
-
     },
 
     verbas: {
-
       "Saldo de Salário": formatarParaBRL(verbas.saldoSalario),
 
       "Aviso Prévio Indenizado": formatarParaBRL(verbas.avisoPrevio),
@@ -539,11 +432,9 @@ export function calcularRescisaoCompleta(dados) {
       "": "───────────────",
 
       "TOTAL BRUTO": formatarParaBRL(totalBruto),
-
     },
 
     descontos: {
-
       INSS: formatarParaBRL(descontos.inss),
 
       IRRF: formatarParaBRL(descontos.irrf),
@@ -553,29 +444,21 @@ export function calcularRescisaoCompleta(dados) {
       "": "───────────────",
 
       "TOTAL DESCONTOS": formatarParaBRL(descontos.totalDescontos),
-
     },
 
     resumo: {
-
       "Total Bruto": formatarParaBRL(totalBruto),
 
       "Total Descontos": formatarParaBRL(descontos.totalDescontos),
 
       "TOTAL LÍQUIDO A RECEBER": formatarParaBRL(totalLiquido),
-
     },
 
     fgts: {
-
       "Saldo FGTS Estimado para Saque": formatarParaBRL(fgts.saldo),
 
       Observação:
-
         "Valor a ser sacado da conta FGTS, não incluso no total líquido da rescisão.",
-
     },
-
   };
-
 }

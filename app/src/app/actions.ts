@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { calcularRescisaoCompleta } from "@/lib/calculation-engine";
 import { FormSchema } from "@/lib/schemas";
 
@@ -12,8 +11,13 @@ export type State = {
   data?: ReturnType<typeof calcularRescisaoCompleta> | null;
 };
 
-export async function calculate(prevState: State, formData: FormData): Promise<State> {
-  const validatedFields = FormSchema.safeParse(Object.fromEntries(formData.entries()));
+export async function calculate(
+  prevState: State,
+  formData: FormData
+): Promise<State> {
+  const validatedFields = FormSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
 
   if (!validatedFields.success) {
     return {
@@ -22,12 +26,12 @@ export async function calculate(prevState: State, formData: FormData): Promise<S
       data: null,
     };
   }
-  
+
   const { salarioBruto, ...restOfData } = validatedFields.data;
-  
+
   const dataForCalc = {
-      ...restOfData,
-      salarioBrutoEmCentavos: Math.round(salarioBruto * 100),
+    ...restOfData,
+    salarioBrutoEmCentavos: Math.round(salarioBruto * 100),
   };
 
   try {
@@ -39,7 +43,10 @@ export async function calculate(prevState: State, formData: FormData): Promise<S
     };
   } catch (error) {
     return {
-      message: error instanceof Error ? error.message : "Ocorreu um erro desconhecido.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro desconhecido.",
       data: null,
     };
   }

@@ -9,10 +9,11 @@ export default function Home() {
             Calculadora de Rescisão CLT
           </h1>
           <p className="text-lg text-gray-600 mt-2">
-            Calcule os valores da sua rescisão de contrato de trabalho de forma rápida e fácil.
+            Calcule os valores da sua rescisão de contrato de trabalho de forma
+            rápida e fácil.
           </p>
         </header>
-        
+
         <CalculatorForm />
       </div>
     </main>
