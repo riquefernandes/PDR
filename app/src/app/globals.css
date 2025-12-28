@@ -1,8 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --geist-background: #000;
+  --geist-foreground: #fff;
+  
+  --accents-1: #111;
+  --accents-2: #333;
+  --accents-3: #444;
+  --accents-4: #666;
+  --accents-5: #888;
+  --accents-6: #999;
+  --accents-7: #eaeaea;
+  --accents-8: #fafafa;
+  
+  --vercel-cyan: #50e3c2;
+  --vercel-blue: #0070f3;
+  --vercel-violet: #7928ca;
+
+  --background: var(--geist-background);
+  --foreground: var(--geist-foreground);
 }
 
 @theme inline {
@@ -12,15 +28,29 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Subtle background pattern inspired by Vercel */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: radial-gradient(circle at 25% 25%, var(--accents-1) 2%, transparent 0%),
+    radial-gradient(circle at 75% 75%, var(--accents-1) 2%, transparent 0%);
+  background-size: 50px 50px;
+  opacity: 0.5;
+  z-index: -1;
+}
+
+/* Selection highlight color */
+::selection {
+  background-color: var(--vercel-blue);
+  color: white;
 }
