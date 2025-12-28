@@ -5,9 +5,10 @@ import { MOTIVOS_DEMISSAO, TIPOS_AVISO_PREVIO } from "@/lib/config";
 import { FormSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionState, useEffect, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import CalculationResults from "./CalculationResults";
+import DateInput from "./ui/date-input";
 
 type FormData = z.infer<typeof FormSchema>;
 
@@ -20,6 +21,7 @@ export default function CalculatorForm() {
     register,
     handleSubmit,
     setError,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
@@ -37,6 +39,7 @@ export default function CalculatorForm() {
 
   useEffect(() => {
     if (state.errors) {
+      console.log("Errors from server:", state.errors);
       for (const [field, messages] of Object.entries(state.errors)) {
         if (messages) {
           setError(field as keyof FormData, {
@@ -49,9 +52,14 @@ export default function CalculatorForm() {
   }, [state.errors, setError]);
 
   const onSubmit = handleSubmit((data) => {
+    console.log("Data being sent to server:", data);
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, String(value));
+      if (value instanceof Date) {
+        formData.append(key, value.toLocaleDateString('pt-BR'));
+      } else {
+        formData.append(key, String(value));
+      }
     });
     startTransition(() => {
       dispatch(formData);
@@ -72,11 +80,16 @@ export default function CalculatorForm() {
             >
               Data de Início do Contrato
             </label>
-            <input
-              type="date"
-              id="dataInicio"
-              {...register("dataInicio")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+            <Controller
+              name="dataInicio"
+              control={control}
+              render={({ field }) => (
+                <DateInput
+                  {...field}
+                  id="dataInicio"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                />
+              )}
             />
             {errors.dataInicio && (
               <p className="text-sm text-red-500 mt-1">
@@ -91,11 +104,16 @@ export default function CalculatorForm() {
             >
               Data Final da Rescisão
             </label>
-            <input
-              type="date"
-              id="dataFim"
-              {...register("dataFim")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+            <Controller
+              name="dataFim"
+              control={control}
+              render={({ field }) => (
+                <DateInput
+                  {...field}
+                  id="dataFim"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                />
+              )}
             />
             {errors.dataFim && (
               <p className="text-sm text-red-500 mt-1">

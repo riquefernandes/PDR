@@ -15,9 +15,11 @@ export async function calculate(
   prevState: State,
   formData: FormData
 ): Promise<State> {
+  console.log('formData', formData);
   const validatedFields = FormSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
+  console.log('validatedFields', validatedFields);
 
   if (!validatedFields.success) {
     return {
@@ -36,7 +38,7 @@ export async function calculate(
 
   try {
     const result = calcularRescisaoCompleta(dataForCalc);
-    console.log(JSON.stringify(result, null, 2));
+    console.log("Calculation result:", JSON.stringify(result, null, 2));
     return {
       message: "Cálculo realizado com sucesso!",
       data: result,
