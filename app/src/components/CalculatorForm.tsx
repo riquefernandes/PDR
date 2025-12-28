@@ -20,7 +20,6 @@ export default function CalculatorForm() {
     register,
     handleSubmit,
     setError,
-    control, // Import control
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
