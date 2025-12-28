@@ -59,7 +59,7 @@ export default function CalculatorForm() {
   });
 
   return (
-      <div>
+    <div>
       <form
         onSubmit={onSubmit}
         className="space-y-8 bg-white p-8 rounded-lg shadow-md"
@@ -269,5 +269,4 @@ export default function CalculatorForm() {
       )}
     </div>
   );
-  
 }
