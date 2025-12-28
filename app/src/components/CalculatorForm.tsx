@@ -5,10 +5,9 @@ import { MOTIVOS_DEMISSAO, TIPOS_AVISO_PREVIO } from "@/lib/config";
 import { FormSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useActionState, useEffect, useTransition } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import CalculationResults from "./CalculationResults";
-import DateInput from "./ui/date-input";
 
 type FormData = z.infer<typeof FormSchema>;
 
@@ -61,7 +60,7 @@ export default function CalculatorForm() {
   });
 
   return (
-    <div>
+      <div>
       <form
         onSubmit={onSubmit}
         className="space-y-8 bg-white p-8 rounded-lg shadow-md"
@@ -74,17 +73,11 @@ export default function CalculatorForm() {
             >
               Data de Início do Contrato
             </label>
-            <Controller
-              name="dataInicio"
-              control={control}
-              render={({ field }) => (
-                <DateInput
-                  {...field}
-                  id="dataInicio"
-                  placeholder="dd/mm/yy"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                />
-              )}
+            <input
+              type="date"
+              id="dataInicio"
+              {...register("dataInicio")}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
             />
             {errors.dataInicio && (
               <p className="text-sm text-red-500 mt-1">
@@ -99,17 +92,11 @@ export default function CalculatorForm() {
             >
               Data Final da Rescisão
             </label>
-            <Controller
-              name="dataFim"
-              control={control}
-              render={({ field }) => (
-                <DateInput
-                  {...field}
-                  id="dataFim"
-                  placeholder="dd/mm/yy"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                />
-              )}
+            <input
+              type="date"
+              id="dataFim"
+              {...register("dataFim")}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
             />
             {errors.dataFim && (
               <p className="text-sm text-red-500 mt-1">
@@ -283,4 +270,5 @@ export default function CalculatorForm() {
       )}
     </div>
   );
+  
 }
