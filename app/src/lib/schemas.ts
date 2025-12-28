@@ -16,14 +16,14 @@ const tiposAvisoPrevioValidos = Object.values(TIPOS_AVISO_PREVIO) as [
 
 const dateSchema = z.string().refine(
   (val) => {
-    if (!val || val.length < 8) return false; // "d/m/yy" is the minimum
-    const parsedDate = parse(val, 'dd/MM/yy', new Date());
+    if (!val || val.length < 10) return false; // "dd/mm/yyyy"
+    const parsedDate = parse(val, 'dd/MM/yyyy', new Date());
     return isValid(parsedDate);
   },
   {
-    message: 'Data inválida. Use o formato dd/mm/yy.',
+    message: 'Data inválida. Use o formato dd/mm/yyyy.',
   }
-).transform((val) => parse(val, 'dd/MM/yy', new Date()));
+).transform((val) => parse(val, 'dd/MM/yyyy', new Date()));
 
 // Schema Zod para validação do formulário, compartilhado entre cliente e servidor.
 export const FormSchema = z.object({
