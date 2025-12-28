@@ -1,7 +1,6 @@
 "use client";
 
 import React, { forwardRef, InputHTMLAttributes } from 'react';
-import { useForm, Controller } from 'react-hook-form';
 
 interface DateInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   onChange: (value: string) => void;
@@ -11,8 +10,8 @@ interface DateInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'on
 const DateInput = forwardRef<HTMLInputElement, DateInputProps>(({ value, onChange, ...props }, ref) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value.replace(/\D/g, ''); // Remove all non-digits
-    if (inputValue.length > 6) {
-      inputValue = inputValue.slice(0, 6);
+    if (inputValue.length > 8) {
+      inputValue = inputValue.slice(0, 8);
     }
 
     if (inputValue.length >= 5) {
@@ -30,7 +29,8 @@ const DateInput = forwardRef<HTMLInputElement, DateInputProps>(({ value, onChang
       ref={ref}
       value={value}
       onChange={handleInputChange}
-      maxLength={8} // "dd/mm/yy"
+      maxLength={10} // "dd/mm/yyyy"
+      placeholder="dd/mm/aaaa"
     />
   );
 });
