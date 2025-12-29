@@ -3,45 +3,49 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
+import Link from "next/link"
 
 export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black">
-      <div className="mx-auto flex h-14 items-center justify-between px-6">
-        {/* Logo Section */}
-        <div className="flex items-center gap-2">
-          <svg
-            width="23"
-            height="20"
-            viewBox="0 0 23 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-white"
-          >
-            <path d="M11.5 0L0 20H23L11.5 0Z" fill="currentColor" />
-          </svg>
-          <div className="flex items-baseline gap-0">
-            <span className="font-sans text-lg font-bold tracking-tight text-white">PDR</span>
-          
-          </div>
+      {/* Wrapper to constrain content width */}
+      <div className="mx-auto flex h-14 max-w-screen-2xl items-center px-6">
+        {/* Left Group: Logo + Nav */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2">
+            <svg
+              width="23"
+              height="20"
+              viewBox="0 0 23 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-white"
+            >
+              <path d="M11.5 0L0 20H23L11.5 0Z" fill="currentColor" />
+            </svg>
+            <span className="font-sans text-lg font-bold tracking-tight text-white">
+              PDR
+            </span>
+          </Link>
+
+          {/* Navigation Links */}
+          <nav>
+            <div className="hidden items-center gap-7 md:flex">
+                <a href="#Calculo" className="text-sm font-normal text-gray-400 transition-colors hover:text-white">
+                    Calculo Rescisão
+                </a>
+                <a href="#blog" className="text-sm font-normal text-gray-400 transition-colors hover:text-white">
+                    Blog
+                </a>
+                <a href="#faq" className="text-sm font-normal text-gray-400 transition-colors hover:text-white">
+                    FAQ
+                </a>
+            </div>
+          </nav>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="hidden items-center gap-7 md:flex">
-          <a href="#Calculo" className="text-sm font-normal text-gray-400 transition-colors hover:text-white">
-            Calculo Rescisão
-          </a>
-          <a href="#blog" className="text-sm font-normal text-gray-400 transition-colors hover:text-white">
-            Blog
-          </a>
-          <a href="#faq" className="text-sm font-normal text-gray-400 transition-colors hover:text-white">
-            FAQ
-          </a>
-          
-        </nav>
-
         {/* Right Section - Search & Actions */}
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2"> {/* ml-auto pushes this to the right */}
           <div className="relative hidden lg:block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <Input
