@@ -1,17 +1,20 @@
 "use client";
 
 import CalculatorForm from "@/components/CalculatorForm";
-import { Intro } from "@/components/intro";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
+const Intro = dynamic(
+  () => import("@/components/intro").then((mod) => mod.Intro),
+  { ssr: false }
+);
 
 export default function Home() {
-  const [showIntro, setShowIntro] = useState(false); // Default to false
+  const [showIntro, setShowIntro] = useState(false);
 
   useEffect(() => {
-    // A animação de introdução só será exibida uma vez por sessão
-    const visited = sessionStorage.getItem("visited");
-    if (!visited) {
+    const hasVisited = sessionStorage.getItem("visited");
+    if (!hasVisited) {
       setShowIntro(true);
       sessionStorage.setItem("visited", "true");
     }
@@ -23,7 +26,7 @@ export default function Home() {
 
       <div className="mx-auto max-w-4xl w-full px-8 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text  bg-sky-50">
+          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-sky-50">
             Calculadora de Rescisão CLT
           </h1>
           <p className="text-lg text-accents-6 mt-4 max-w-2xl mx-auto">
