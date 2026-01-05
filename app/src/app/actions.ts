@@ -15,11 +15,9 @@ export async function calculate(
   prevState: State,
   formData: FormData
 ): Promise<State> {
-  console.log('formData', formData);
   const validatedFields = FormSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
-  console.log('validatedFields', validatedFields);
 
   if (!validatedFields.success) {
     return {
@@ -29,16 +27,8 @@ export async function calculate(
     };
   }
 
-  const { salarioBruto, ...restOfData } = validatedFields.data;
-
-  const dataForCalc = {
-    ...restOfData,
-    salarioBrutoEmCentavos: Math.round(salarioBruto * 100),
-  };
-
   try {
-    const result = calcularRescisaoCompleta(dataForCalc);
-    console.log("Calculation result:", JSON.stringify(result, null, 2));
+    const result = calcularRescisaoCompleta(validatedFields.data);
     return {
       message: "Cálculo realizado com sucesso!",
       data: result,

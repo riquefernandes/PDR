@@ -39,17 +39,24 @@ const SplitText: React.FC<SplitTextProps> = ({
 }) => {
   const ref = useRef<HTMLParagraphElement>(null);
   const animationCompletedRef = useRef(false);
-  const [fontsLoaded, setFontsLoaded] = useState<boolean>(false);
+  const [fontsLoaded, setFontsLoaded] = useState<boolean>(
+    () => typeof document !== "undefined" && document.fonts.status === "loaded"
+  );
 
   useEffect(() => {
-    if (document.fonts.status === "loaded") {
+    if (fontsLoaded) return;
+
+    const handleFontLoad = () => {
       setFontsLoaded(true);
-    } else {
-      document.fonts.ready.then(() => {
-        setFontsLoaded(true);
-      });
-    }
-  }, []);
+      document.fonts.removeEventListener("loadingdone", handleFontLoad);
+    };
+
+    document.fonts.addEventListener("loadingdone", handleFontLoad);
+
+    return () => {
+      document.fonts.removeEventListener("loadingdone", handleFontLoad);
+    };
+  }, [fontsLoaded]);
 
   useGSAP(
     () => {
@@ -73,8 +80,8 @@ const SplitText: React.FC<SplitTextProps> = ({
         marginValue === 0
           ? ""
           : marginValue < 0
-            ? `-=${Math.abs(marginValue)}${marginUnit}`
-            : `+=${marginValue}${marginUnit}`;
+          ? `-=${Math.abs(marginValue)}${marginUnit}`
+          : `+=${marginValue}${marginUnit}`;
       const start = `top ${startPct}%${sign}`;
       let targets: Element[] = [];
       const assignTargets = (self: GSAPSplitText) => {
