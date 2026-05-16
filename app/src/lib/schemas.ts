@@ -31,31 +31,31 @@ export const FormSchema = z.object({
   dataFim: dateSchema,
   salarioBruto: z.coerce
     .number({
-      error: "O salário bruto deve ser um número válido.",
+      invalid_type_error: "O salário bruto deve ser um número válido.",
     })
     .positive("O salário deve ser um número positivo."),
   motivoDemissao: z.enum(motivosDemissaoValidos, {
-    error: "O motivo da demissão é obrigatório.",
+    required_error: "O motivo da demissão é obrigatório.",
   }),
   tipoAvisoPrevio: z.enum(tiposAvisoPrevioValidos, {
-    error: "O tipo de aviso prévio é obrigatório.",
+    required_error: "O tipo de aviso prévio é obrigatório.",
   }),
   // Campos que podem ser "vazios" ou zero, com valores padrão.
   feriasVencidasNaoGozadas: z.coerce
     .number({
-      error: "O valor de férias vencidas deve ser um número.",
+      invalid_type_error: "O valor de férias vencidas deve ser um número.",
     })
     .min(0, "O número não pode ser negativo.")
     .default(0),
   dependentesIR: z.coerce
     .number({
-      error: "O número de dependentes deve ser um número.",
+      invalid_type_error: "O número de dependentes deve ser um número.",
     })
     .min(0, "O número não pode ser negativo.")
     .default(0),
   pensaoAlimenticiaPercentual: z.coerce
     .number({
-      error: "O valor da pensão deve ser um número.",
+      invalid_type_error: "O valor da pensão deve ser um número.",
     })
     .min(0, "A porcentagem não pode ser negativa.")
     .max(100, "A porcentagem não pode ser maior que 100.")

@@ -10,7 +10,7 @@ import { z } from "zod";
 import CalculationResults from "./CalculationResults";
 import DateInput from "./ui/date-input";
 
-type FormData = z.infer<typeof FormSchema>;
+type FormData = z.input<typeof FormSchema>;
 
 const commonInputClasses =
   "w-full px-3 py-2 bg-accents-1 border border-accents-2 rounded-md transition-colors focus:border-vercel-blue focus:outline-none";
@@ -54,8 +54,9 @@ export default function CalculatorForm() {
   }, [state.errors, setError]);
 
   const onSubmit = handleSubmit((data) => {
+    const validatedData = data as unknown as z.infer<typeof FormSchema>;
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(validatedData).forEach(([key, value]) => {
       if (value instanceof Date) {
         formData.append(key, value.toLocaleDateString("pt-BR"));
       } else {
